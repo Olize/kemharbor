@@ -4,7 +4,9 @@
 
 Build from this source on a dedicated disposable Linux host. Do not use a mutable `latest` image tag, assume that a similarly named image was produced from this source, or attach unattended production clients.
 
-Previously built private experimental images are **obsolete** and predate security hardening such as the WireGuard socket-mark restriction (`FwMark = 0xca6c`). No historical image should be used for security-sensitive workloads. Those artifacts are not releases of this public source snapshot.
+**Registry empty:** The historical experimental container package at `ghcr.io/olize/kemharbor` was removed in full (14 obsolete versions). Its absence was confirmed using the GitHub Packages API. There is currently **no published KEMHarbor GHCR package** to install. Any previously downloaded or cached image can still exist on third-party systems; it must not be trusted as a current release.
+
+The removed images predated safety hardening such as the WireGuard socket-mark restriction (`FwMark = 0xca6c`) and were not releases of this public source snapshot. Do not recreate the package until authenticated Mullvad-PQ, daemon/host failure handling, independent review and digest-bound signature/SBOM validation are completed.
 
 A future image release should be built from an explicitly reviewed source commit, tested with a real authenticated Mullvad post-quantum tunnel and forced failure/leak scenarios, published by immutable digest, accompanied by an SBOM, and signed with a verifiable build identity.
 
