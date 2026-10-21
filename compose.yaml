@@ -1,0 +1,41 @@
+# Experimental Docker Compose configuration for Linux. Never use network_mode: host.
+services:
+  kemharbor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: kemharbor:local
+    container_name: kemharbor
+    # The default Docker bridge respects dns: directly. Custom Compose networks
+    # interpose 127.0.0.11, which we do not allow for this VPN gateway.
+    network_mode: bridge
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_ADMIN
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    pids_limit: 128
+    mem_limit: 768m
+    dns:
+      - 10.64.0.1
+    tmpfs:
+      - /run/vpn-conf:rw,nosuid,nodev,noexec,size=16m,mode=0700
+    env_file:
+      - .env
+    # Reports readiness to Compose. It does NOT terminate dependent clients
+    # on a later VPN failure: a lifecycle supervisor remains mandatory.
+    healthcheck:
+      test: ["CMD", "test", "-f", "/run/vpn-conf/ready"]
+      interval: 10s
+      timeout: 3s
+      retries: 2
+      start_period: 220s
+    secrets:
+      - mullvad_wg_private_key
+    restart: "no"
+
+secrets:
+  mullvad_wg_private_key:
+    file: ./secrets/mullvad_wg_private_key

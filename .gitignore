@@ -1,0 +1,26 @@
+# Private keys, secrets, VPN configuration, logs, binary artifacts
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx
+*.secret
+*.credentials
+*.conf
+relay.env
+secrets/
+*.tar
+*.tar.*
+*.zip
+*.asc
+*.log
+*.sqlite
+*.db
+**/__pycache__/
+.DS_Store
+node_modules/
+dist/
+build/
+coverage/
