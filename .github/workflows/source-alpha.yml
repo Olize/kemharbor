@@ -1,0 +1,64 @@
+name: Verify public KEMHarbor source alpha
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  source-build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout the exact tested public revision
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Check shell syntax and source-only release boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in scripts/*.sh; do
+            bash -n "$file"
+          done
+          test ! -d tests
+          test ! -e .env
+          test ! -e secrets/mullvad_wg_private_key
+          test ! -e .github/workflows/publish-private.yml
+          git diff --check
+      - name: Validate Compose configuration using placeholder values
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p secrets
+          trap 'rm -f -- .env secrets/mullvad_wg_private_key' EXIT
+          cp .env.example .env
+          printf '%s\n' 'SYNTHETIC_NOT_A_PRIVATE_KEY' > secrets/mullvad_wg_private_key
+          chmod 0400 secrets/mullvad_wg_private_key
+          docker compose config --quiet
+      - name: Build source image and verify signed upstream dependency
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker build --pull --tag kemharbor:ci .
+          docker run --rm --entrypoint /usr/bin/bash kemharbor:ci -c '
+            set -euo pipefail
+            for tool in wg wg-quick nft ip timeout curl jq; do
+              command -v "$tool"
+            done
+            test -x /usr/local/sbin/mullvad-upgrade-tunnel
+            test -x /usr/local/sbin/kemharbor-entrypoint
+            test ! -e /usr/local/sbin/kernel-netns-test
+          '
+      - name: Reject startup with absent VPN credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          if docker run --rm --network none kemharbor:ci >/dev/null 2>&1; then
+            echo 'SECURITY FAILURE: Image started without any VPN configuration.' >&2
+            exit 1
+          fi
+          echo 'PASS: Missing VPN configuration rejected; no network was attached.'
