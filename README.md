@@ -4,6 +4,8 @@
 
 **Status: public source-only alpha (research preview). Not audited or production-ready.**
 
+**Platform:** Linux **x86_64/amd64 only** for this source build. The pinned Mullvad upgrade binary is compiled for amd64; ARM64 support is not implemented or tested. The Fedora base image is pinned by digest, but distribution RPM dependencies are resolved at build time and are not yet reproducibly locked. Build results can change when package repositories change.
+
 This repository contains the standalone KEMHarbor gateway source and usage documentation. The distributed source tree does not include test harnesses, experimental lifecycle supervisors or an automated container-image release workflow.
 
 ## Gateway characteristics
