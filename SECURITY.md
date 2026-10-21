@@ -3,6 +3,10 @@
 **Status: research preview; no formal security audit and no production-ready release.**
 This source distribution does not include test harnesses or an automated image-release pipeline. Its documented safety properties are not a substitute for independent security review and live validation.
 
+## Platform and dependency boundaries
+
+This experimental build targets Linux **x86_64/amd64**. Its upstream Mullvad PQ upgrade executable is downloaded for amd64 only; do not use the resulting image on ARM64. The base OCI image is pinned by digest but RPM dependency versions are not locked. An image built at a later date therefore requires fresh testing and security review; digest pinning alone does not provide ongoing security updates.
+
 ## Isolation and capabilities
 
 - Run the VPN inside a dedicated Linux network namespace. **Never** use host networking or privileged mode.
