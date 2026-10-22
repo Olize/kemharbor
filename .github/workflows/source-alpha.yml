@@ -53,12 +53,26 @@ jobs:
             test -x /usr/local/sbin/kemharbor-entrypoint
             test ! -e /usr/local/sbin/kernel-netns-test
           '
-      - name: Reject startup with absent VPN credentials
+      - name: Reject absent runtime WireGuard secret for the expected reason
         shell: bash
         run: |
           set -euo pipefail
-          if docker run --rm --network none kemharbor:ci >/dev/null 2>&1; then
-            echo 'SECURITY FAILURE: Image started without any VPN configuration.' >&2
+          # All format-valid values below are synthetic. No network interfaces
+          # or nftables rules may be set up before the absent secret is rejected.
+          log="$(mktemp)"
+          trap 'rm -f -- "$log"' EXIT
+          if docker run --rm --network none \
+            --cap-drop=ALL \
+            --env WG_ADDRESS=10.64.0.2/32 \
+            --env VPN_ENDPOINT_IP=198.51.100.15 \
+            --env VPN_ENDPOINT_PORT=51820 \
+            --env VPN_PEER_PUBLIC_KEY=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= \
+            kemharbor:ci >"$log" 2>&1; then
+            echo 'SECURITY FAILURE: Image accepted a missing WireGuard key.' >&2
             exit 1
           fi
-          echo 'PASS: Missing VPN configuration rejected; no network was attached.'
+          if ! grep -Fxq 'ERROR: WireGuard key secret missing.' "$log"; then
+            echo 'ERROR: Image failed for an unexpected reason, not the absent key.' >&2
+            exit 1
+          fi
+          echo 'PASS: Missing secret rejected by expected pre-network VPN validation.'
